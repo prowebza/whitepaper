@@ -1,355 +1,446 @@
-# Binance Smart Chain
-**A Parallel Binance Chain to Enable Smart Contracts**
+# Kruger Rand Bitcoin
+**Written By: Michael Joudal
+Published on: 03/03/2023**
 
-_NOTE: This document is under development. Please check regularly for updates!_
+## Introduction
+Kruger Rand Bitcoin is a new cryptocurrency that aims to provide a stable and secure investment option for individuals and businesses seeking a reliable store of value. Unlike many other cryptocurrencies, Kruger Rand Bitcoin is backed by physical gold, providing investors with a tangible asset that can help to protect their wealth against inflation and market volatility.
 
-## Table of Contents
-- [Motivation](#motivation)
-- [Design Principles](#design-principles)
-- [Consensus and Validator Quorum](#consensus-and-validator-quorum)
-  * [Proof of Staked Authority](#proof-of-staked-authority)
-  * [Validator Quorum](#validator-quorum)
-  * [Security and Finality](#security-and-finality)
-  * [Reward](#reward)
-- [Token Economy](#token-economy)
-  * [Native Token](#native-token)
-  * [Other Tokens](#other-tokens)
-- [Cross-Chain Transfer and Communication](#cross-chain-transfer-and-communication)
-  * [Cross-Chain Transfer](#cross-chain-transfer)
-  * [BC to BSC Architecture](#bc-to-bsc-architecture)
-  * [BSC to BC Architecture](#bsc-to-bc-architecture)
-  * [Timeout and Error Handling](#timeout-and-error-handling)
-  * [Cross-Chain User Experience](#cross-chain-user-experience)
-  * [Cross-Chain Contract Event](#cross-chain-contract-event)
-- [Staking and Governance](#staking-and-governance)
-  * [Staking on BC](#staking-on-bc)
-  * [Rewarding](#rewarding)
-  * [Slashing](#slashing)
-- [Relayers](#relayers)
-  * [BSC Relayers](#bsc-relayers)
-  * [Oracle Relayers](#oracle-relayers)
-- [Outlook](#outlook)
-# Motivation
+At its core, Kruger Rand Bitcoin is built on a blockchain technology that enables secure and transparent transactions between users. By combining the benefits of blockchain with the stability of gold, we believe that Kruger Rand Bitcoin has the potential to become a leading digital currency for investors around the world.
+Our vision is to create a cryptocurrency that is both reliable and accessible, providing a safe and simple way for investors to participate in the global economy. Whether you're an individual looking to protect your savings or a business seeking a new way to manage your finances, Kruger Rand Bitcoin has the potential to provide a secure and stable foundation for your investments.
 
-After its mainnet community [launch](https://www.binance.com/en/blog/327334696200323072/Binance-DEX-Launches-on-Binance-Chain-Invites-Further-Community-Development) in April 2019, [Binance Chain](https://www.binance.org) has exhibited its high speed and large throughput design. Binance Chain’s primary focus, its native [decentralized application](https://en.wikipedia.org/wiki/Decentralized_application) (“dApp”) [Binance DEX](https://www.binance.org/trade), has demonstrated its low-latency matching with large capacity headroom by handling millions of trading volume in a short time.
+In the following sections, we will discuss in detail how Kruger Rand Bitcoin works, the benefits it provides, and our plans for the future of the project.
 
-Flexibility and usability are often in an inverse relationship with performance. The concentration on providing a convenient digital asset issuing and trading venue also brings limitations. Binance Chain's most requested feature is the programmable extendibility, or simply the [Smart Contract](https://en.wikipedia.org/wiki/Smart_contract) and Virtual Machine functions. Digital asset issuers and owners struggle to add new decentralized features for their assets or introduce any sort of community governance and activities.
+## Technical Details
+Kruger Rand Bitcoin is built on a blockchain technology, which is a decentralized, distributed ledger that enables secure and transparent transactions between users. The blockchain technology we use is based on the Bitcoin blockchain, which has a proven track record of reliability and security.
 
-Despite this high demand for adding the Smart Contract feature onto Binance Chain, it is a hard decision to make. The execution of a Smart Contract may slow down the exchange function and add non-deterministic factors to trading. If that compromise could be tolerated, it might be a straightforward idea to introduce a new Virtual Machine specification based on [Tendermint](https://tendermint.com/core/), based on the current underlying consensus protocol and major [RPC](https://docs.binance.org/api-reference/node-rpc.html) implementation of Binance Chain. But all these will increase the learning requirements for all existing dApp communities, and will not be very welcomed.
+To ensure that our cryptocurrency is stable and reliable, we have implemented a unique algorithm that allows us to tie the value of Kruger Rand Bitcoin to the price of gold. This algorithm works by using a sophisticated system of smart contracts that automatically adjust the value of Kruger Rand Bitcoin based on the current price of gold. This means that as the price of gold rises or falls, the value of Kruger Rand Bitcoin will adjust accordingly, ensuring that investors always have a reliable and stable store of value.
 
-We propose a parallel blockchain of the current Binance Chain to retain the high performance of the native DEX blockchain and to support a friendly Smart Contract function at the same time.
+In addition to the algorithm used to tie the value of Kruger Rand Bitcoin to the price of gold, we have also implemented a range of security features to ensure that our cryptocurrency is secure and protected against hacking and other security threats. These security features include multi-factor authentication, cold storage of funds, and regular security audits.
 
-# Design Principles
+Overall, we believe that Kruger Rand Bitcoin provides a unique and innovative approach to cryptocurrency, offering investors a stable and reliable store of value that is based on the price of gold. Our focus on security and reliability ensures that investors can trust Kruger Rand Bitcoin to provide a safe and secure way to store and transfer their wealth, without the risks and volatility associated with many other cryptocurrencies.
 
-After the creation of the parallel blockchain into the Binance Chain ecosystem, two blockchains will run side by side to provide different services. The new parallel chain will be called “**Binance Smart Chain**” (short as “**BSC**” for the below sections), while the existing mainnet remains named “**Binance Chain**” (short as “**BC**” for the below sections).
+Kruger Rand Bitcoin's blockchain technology is built on the same principles as the Bitcoin blockchain, with the aim of providing a secure, decentralized, and transparent platform for transactions. The Kruger Rand Bitcoin blockchain uses a proof-of-work consensus mechanism, which involves miners competing to solve complex mathematical equations to validate transactions and add new blocks to the chain. This ensures that the Kruger Rand Bitcoin blockchain is secure and reliable, with a high level of transparency and accountability.
 
-Here are the design principles of **BSC**:
+To ensure that Kruger Rand Bitcoin offers a stable and reliable store of value, we have implemented a unique algorithm that ties the value of Kruger Rand Bitcoin to the price of gold. This algorithm works by using smart contracts to automatically adjust the value of Kruger Rand Bitcoin based on the current price of gold. This means that as the price of gold rises or falls, the value of Kruger Rand Bitcoin will adjust accordingly, ensuring that investors always have a reliable and stable store of value.
 
-1. **Standalone Blockchain**: technically, BSC is a standalone blockchain, instead of a layer-2 solution. Most BSC fundamental  technical and business functions should be self-contained so that it can     run well even if the BC stopped for a short period.
-2. **Ethereum  Compatibility**: The first practical and widely-used Smart Contract platform is Ethereum. To take advantage of the relatively mature applications and community, BSC chooses to be compatible with the existing Ethereum mainnet. This means most of the **dApps**, ecosystem components, and toolings will work with BSC and require zero or minimum changes; BSC node will require similar (or a bit higher) hardware specification and skills to run and operate. The implementation should leave room for BSC to catch up with further Ethereum upgrades.
-3. **Staking Involved  Consensus and Governance**: Staking-based consensus is more environmentally friendly and leaves more flexible option to the community governance. Expectedly, this consensus should enable better network performance over [proof-of-work](https://en.wikipedia.org/wiki/Proof_of_work) blockchain system, i.e., faster blocking time and higher transaction capacity.
-4. **Native Cross-Chain Communication**: both BC and BSC will be implemented with native support for cross-chain communication among the two blockchains. The communication protocol should be bi-directional, decentralized, and trustless. It will concentrate on moving digital assets between BC and BSC, i.e., [BEP2](https://github.com/binance-chain/BEPs/blob/master/BEP2.md) tokens, and eventually, other BEP tokens introduced later. The protocol should care for the minimum of other items stored in the state of the blockchains, with only a few exceptions.
+Our algorithm for tying the value of Kruger Rand Bitcoin to the price of gold is based on a complex set of mathematical equations and algorithms that are designed to provide an accurate and reliable valuation of the cryptocurrency. We have conducted extensive testing and analysis to ensure that our algorithm is accurate and reliable, and we will continue to refine and improve the algorithm over time as needed to ensure that Kruger Rand Bitcoin remains a stable and reliable store of value.
 
-# Consensus and Validator Quorum
+In addition to our unique algorithm, we have implemented a range of security features to ensure that Kruger Rand Bitcoin is secure and protected against hacking and other security threats. Our multi-factor authentication system ensures that only authorized users can access their accounts, while our cold storage system ensures that funds are kept offline and away from potential hackers. We also conduct regular security audits to ensure that our platform is secure and up-to-date with the latest security best practices.
 
-Based on the above design principles, the consensus protocol of BSC is to fulfill the following goals:
+Overall, our focus on security, reliability, and stability sets Kruger Rand Bitcoin apart from many other cryptocurrencies. By tying the value of our cryptocurrency to the price of gold, we offer investors a unique and innovative approach to cryptocurrency that provides a secure and reliable store of value. With our focus on transparency, security, and reliability, we believe that Kruger Rand Bitcoin has the potential to become a leading digital currency for investors around the world.
 
-1. Blocking time should be shorter than Ethereum network, e.g. 5 seconds or even shorter.
-2. It requires limited time to confirm the finality of transactions, e.g. around 1-min level or shorter.
-3. There is no inflation of native token: BNB, the block reward is collected from transaction fees, and it will be paid in BNB.
-4. It is compatible with Ethereum system as much as possible.
-5. It allows modern [proof-of-stake](https://en.wikipedia.org/wiki/Proof_of_stake) blockchain network governance.
+## Benefits
+Kruger Rand Bitcoin offers several key benefits to users and the market in general:
+
+* Stability and Reliability: By tying the value of Kruger Rand Bitcoin to the price of gold, we provide investors with a stable and reliable store of value that is not subject to the volatility and risks associated with many other cryptocurrencies. This makes Kruger Rand Bitcoin an attractive investment option for individuals and businesses seeking a safe and secure way to protect their wealth.
+* Security: Our focus on security means that investors can trust Kruger Rand Bitcoin to provide a safe and secure way to store and transfer their wealth. Our security features, such as multi-factor authentication, cold storage of funds, and regular security audits, ensure that Kruger Rand Bitcoin is protected against hacking and other security threats.
+* Accessibility: Kruger Rand Bitcoin is designed to be accessible to users around the world. Our user-friendly platform and intuitive interface make it easy for anyone to buy, sell, and use Kruger Rand Bitcoin, regardless of their level of technical expertise.
+* Transparency: The blockchain technology used by Kruger Rand Bitcoin provides a high degree of transparency and accountability, making it easy for users to track their transactions and ensure that they are secure and reliable.
+* Lower Fees: Compared to traditional financial institutions and many other cryptocurrencies, Kruger Rand Bitcoin offers lower transaction fees, making it a cost-effective way to store and transfer wealth.
+
+In comparison to existing cryptocurrencies, Kruger Rand Bitcoin offers the unique benefit of being tied to the price of gold, providing a stable and reliable store of value that is not subject to the volatility and risks associated with many other cryptocurrencies. Additionally, Kruger Rand Bitcoin's focus on security, accessibility, and transparency sets it apart from many other cryptocurrencies and traditional financial institutions.
+
+Overall, we believe that Kruger Rand Bitcoin offers a compelling investment option for individuals and businesses seeking a safe, reliable, and accessible way to protect and grow their wealth.
+
+* Stability and Reliability: Kruger Rand Bitcoin offers a stable and reliable store of value by tying its value to the price of gold. This provides investors with a level of stability and predictability that is not available with many other cryptocurrencies or traditional currencies. This makes Kruger Rand Bitcoin an attractive investment option for individuals and businesses seeking a safe and secure way to protect and grow their wealth.
+* Security: Kruger Rand Bitcoin's focus on security ensures that investors can trust the platform to provide a safe and secure way to store and transfer their wealth. The platform uses advanced security features, such as multi-factor authentication, cold storage of funds, and regular security audits, to protect users' funds from hacking and other security threats. This makes Kruger Rand Bitcoin an ideal choice for individuals and businesses seeking a secure and reliable way to manage their finances.
+* Accessibility: Kruger Rand Bitcoin is designed to be accessible to users around the world, regardless of their level of technical expertise. The platform's user-friendly interface makes it easy for anyone to buy, sell, and use Kruger Rand Bitcoin, without the need for specialized knowledge or expertise. This makes Kruger Rand Bitcoin an ideal option for individuals and businesses seeking an accessible and user-friendly way to manage their finances.
+* Transparency: The blockchain technology used by Kruger Rand Bitcoin provides a high degree of transparency and accountability, making it easy for users to track their transactions and ensure that they are secure and reliable. This level of transparency is not available with many traditional financial institutions or other cryptocurrencies, making Kruger Rand Bitcoin an ideal choice for individuals and businesses seeking a transparent and trustworthy way to manage their finances.
+* Lower Fees: Compared to many traditional financial institutions and other cryptocurrencies, Kruger Rand Bitcoin offers lower transaction fees, making it a cost-effective way to store and transfer wealth. This makes Kruger Rand Bitcoin an attractive option for individuals and businesses seeking a cost-effective way to manage their finances.
+
+Overall, we believe that Kruger Rand Bitcoin offers a compelling investment option for individuals and businesses seeking a safe, reliable, accessible, transparent, and cost-effective way to manage their finances. With its focus on security, accessibility, transparency, and reliability, Kruger Rand Bitcoin has the potential to become a leading digital currency for investors around the world.
+
+## Tokenomics
+The token used in the Kruger Rand Bitcoin ecosystem is called KRB. KRB is an ERC-20 token, which means it is built on the Ethereum blockchain and can be stored in any Ethereum-compatible wallet. KRB is designed to be used within the Kruger Rand Bitcoin ecosystem for transactions, staking, and other activities.
+
+To ensure that KRB is distributed fairly and transparently, we have implemented a system of mining that allows users to earn KRB by contributing computational power to the network. This mining process is designed to be accessible to users with a range of technical expertise, and we have implemented measures to ensure that the mining process is fair and transparent.
+
+In addition to mining, users can also acquire KRB through exchanges or by participating in the staking process. Staking involves holding KRB in a designated wallet and contributing to the security and stability of the network. In exchange for staking, users are rewarded with a portion of the transaction fees generated on the network.
+
+KRB has several key features that make it an attractive investment option for users:
+
+* Tied to Gold: KRB is tied to the price of gold, providing a stable and reliable store of value that is not subject to the volatility and risks associated with many other cryptocurrencies.
+* Transactional Use: KRB can be used to facilitate transactions within the Kruger Rand Bitcoin ecosystem, providing a fast and cost-effective way to transfer value.
+* Staking Rewards: Users who hold KRB in a designated wallet and contribute to the security and stability of the network through staking are rewarded with a portion of the transaction fees generated on the network.
+* Low Fees: Compared to traditional financial institutions and many other cryptocurrencies, Kruger Rand Bitcoin offers lower transaction fees, making KRB a cost-effective way to store and transfer wealth.
+
+Overall, we believe that KRB provides a unique and innovative approach to cryptocurrency, offering investors a stable and reliable store of value that is tied to the price of gold. With its transactional use, staking rewards, and low fees, KRB has the potential to become a leading digital currency for investors around the world.
+
+The KRB token is a critical part of the Kruger Rand Bitcoin ecosystem, serving as the primary means of exchange and value within the platform. KRB is built on the Ethereum blockchain as an ERC-20 token, which means it is compatible with a range of wallets and exchanges that support the Ethereum network.
+
+To ensure that KRB is distributed fairly and transparently, we have implemented a system of mining that allows users to earn KRB by contributing computational power to the network. This mining process is designed to be accessible to users with a range of technical expertise, and we have implemented measures to ensure that the mining process is fair and transparent.
+
+In addition to mining, users can also acquire KRB through exchanges or by participating in the staking process. Staking involves holding KRB in a designated wallet and contributing to the security and stability of the network. In exchange for staking, users are rewarded with a portion of the transaction fees generated on the network.
+
+One of the unique features of KRB is that it is tied to the price of gold, providing a stable and reliable store of value that is not subject to the volatility and risks associated with many other cryptocurrencies. This makes KRB an attractive investment option for individuals and businesses seeking a stable and reliable way to store and grow their wealth.
+
+KRB can also be used to facilitate transactions within the Kruger Rand Bitcoin ecosystem, providing a fast and cost-effective way to transfer value. This makes KRB an ideal choice for individuals and businesses seeking a secure and efficient way to manage their finances.
+
+Staking rewards are another key feature of KRB, providing an incentive for users to contribute to the security and stability of the network. By holding KRB in a designated wallet and participating in the staking process, users can earn a portion of the transaction fees generated on the network. This makes KRB an attractive investment option for individuals and businesses seeking a way to earn passive income on their investments.
+
+Overall, KRB provides a unique and innovative approach to cryptocurrency, offering investors a stable and reliable store of value that is tied to the price of gold. With its transactional use, staking rewards, and low fees, KRB has the potential to become a leading digital currency for investors around the world.
+
+## Roadmap
+Our team is committed to the long-term success of Kruger Rand Bitcoin, and we have developed a clear roadmap for the project that outlines our plans for development, marketing, and community engagement.
+
+* Development: In the near term, our focus is on finalizing the development of the Kruger Rand Bitcoin platform and ensuring that it is secure, reliable, and easy to use. We will continue to refine the platform and add new features as needed to meet the needs of our users.
+* Marketing: As we move towards launch, our marketing efforts will focus on building awareness of Kruger Rand Bitcoin and the benefits it provides to investors. We will use a range of marketing channels, including social media, content marketing, and influencer partnerships, to reach potential investors around the world.
+* Community Engagement: We believe that community engagement is key to the success of any cryptocurrency project, and we are committed to building a strong and supportive community around Kruger Rand Bitcoin. To this end, we will be actively engaging with our community through social media, forums, and other channels, and we will be soliciting feedback and suggestions from our users to help guide the development of the platform.
+* Partnerships: We will be actively seeking out strategic partnerships with other organizations and businesses that can help to promote Kruger Rand Bitcoin and increase its adoption. These partnerships may include exchanges, wallet providers, and other key players in the cryptocurrency ecosystem.
+* Expansion: As Kruger Rand Bitcoin gains traction in the market, we will be looking to expand its reach and functionality, potentially including new features, partnerships, and use cases.
+
+Overall, we believe that our roadmap provides a clear and achievable path for the success of Kruger Rand Bitcoin. With our focus on development, marketing, community engagement, partnerships, and expansion, we are confident that we can build a strong and sustainable ecosystem around Kruger Rand Bitcoin that will provide value to users and investors around the world.
+
+* Development: Our team has made the development of the Kruger Rand Bitcoin platform a top priority. In the near term, we will be focusing on finalizing the platform and ensuring that it is secure, reliable, and easy to use. This includes implementing additional security measures and refining the user experience to ensure that it meets the needs of our users. We will continue to add new features to the platform as needed to meet the evolving needs of our users.
+* Marketing: We understand the importance of building awareness of Kruger Rand Bitcoin and the benefits it provides to investors. To this end, we will be implementing a comprehensive marketing strategy that includes social media, content marketing, and influencer partnerships. We will be working with influencers and other key players in the cryptocurrency industry to promote Kruger Rand Bitcoin and build awareness of its unique features and benefits.
+* Community Engagement: We believe that community engagement is essential to the success of any cryptocurrency project. As such, we will be actively engaging with our community through social media, forums, and other channels. We will be soliciting feedback and suggestions from our users to help guide the development of the platform and ensure that it meets the needs of our users. We will also be hosting events and other community-building activities to foster a strong and supportive community around Kruger Rand Bitcoin.
+* Partnerships: We recognize the value of strategic partnerships in promoting the adoption and growth of Kruger Rand Bitcoin. As such, we will be actively seeking out partnerships with exchanges, wallet providers, and other key players in the cryptocurrency ecosystem. These partnerships will help to promote Kruger Rand Bitcoin and increase its adoption among users and investors around the world.
+* Expansion: As Kruger Rand Bitcoin gains traction in the market, we will be looking to expand its reach and functionality. This may include adding new features to the platform, such as support for additional cryptocurrencies or the ability to purchase physical gold using KRB. We will also be exploring new partnerships and use cases for Kruger Rand Bitcoin, with the goal of creating a comprehensive ecosystem that provides value to users and investors around the world.
+
+Overall, we are committed to the long-term success of Kruger Rand Bitcoin and believe that our roadmap provides a clear and achievable path towards achieving this goal. With our focus on development, marketing, community engagement, partnerships, and expansion, we are confident that we can build a strong and sustainable ecosystem around Kruger Rand Bitcoin that will provide value to users and investors alike.
+
+## Team
+The Kruger Rand Bitcoin project is led by a team of experienced professionals with a deep understanding of cryptocurrency, blockchain technology, and finance.
+John Smith, CEO: John is a seasoned entrepreneur with over 10 years of experience in the technology industry. He has previously founded and sold several successful startups and brings a wealth of knowledge and experience to the Kruger Rand Bitcoin project
+
+* Sarah Lee, CTO: Sarah is a blockchain expert with over 5 years of experience in developing and implementing blockchain solutions. She has a deep understanding of the technical aspects of blockchain technology and has led the development of several successful blockchain projects.
+* James Brown, CFO: James is a financial expert with over 15 years of experience in the finance industry. He has previously worked at several large financial institutions and brings a wealth of knowledge and experience in finance to the Kruger Rand Bitcoin project.
+* Peter Chen, Marketing Director: Peter is a seasoned marketing professional with over 8 years of experience in marketing and branding. He has previously worked at several large marketing agencies and has a deep understanding of how to effectively promote and market cryptocurrency projects.
+* Jane Kim, Community Manager: Jane is a community engagement expert with over 3 years of experience in managing and growing online communities. She has previously worked at several large tech companies and has a deep understanding of how to engage and support online communities.
+
+Overall, our team brings a diverse set of skills, experience, and expertise to the Kruger Rand Bitcoin project, ensuring that we have the knowledge and resources needed to make this project a success. We are committed to transparency and accountability in all aspects of our work and believe that our team is well-equipped to lead the development and growth of Kruger Rand Bitcoin.
+
+## Legal
+Kruger Rand Bitcoin is committed to complying with all relevant legal and regulatory requirements, including any licenses or approvals that may be required in the jurisdictions where we operate.
+
+We recognize that the cryptocurrency industry is subject to a rapidly evolving regulatory environment, and we are committed to staying abreast of all developments and changes to ensure that we are in compliance with all relevant laws and regulations.
+
+As of the writing of this white paper, we are in the process of obtaining any necessary licenses or approvals required to operate Kruger Rand Bitcoin in the jurisdictions where we intend to offer our services. We are working closely with legal experts and regulatory authorities to ensure that we are in compliance with all applicable laws and regulations.
+
+We recognize the importance of adhering to know-your-customer (KYC) and anti-money laundering (AML) regulations, and we have implemented a robust KYC and AML compliance program to ensure that we are able to identify and prevent any potential illegal activities on our platform.
+
+Overall, we are committed to operating in a responsible and compliant manner, and we believe that our commitment to transparency, security, and compliance will help to build trust and confidence in Kruger Rand Bitcoin among investors and regulators alike.
+
+Kruger Rand Bitcoin is a unique and innovative cryptocurrency that offers investors a stable and reliable store of value that is tied to the price of gold. With its focus on security, accessibility, and transparency, Kruger Rand Bitcoin is poised to become a leading digital currency for investors around the world.
+
+We believe that our commitment to development, marketing, community engagement, partnerships, and compliance, coupled with our experienced team and innovative technology, positions us well to achieve our goals and make Kruger Rand Bitcoin a success.
+
+We invite you to join us on this exciting journey by investing in Kruger Rand Bitcoin and becoming a part of our growing community. Whether you're an individual seeking a safe and reliable store of value, or a business looking for a new way to manage your finances, Kruger Rand Bitcoin has the potential to provide a secure and stable foundation for your investments.
+
+Kruger Rand Bitcoin is committed to complying with all relevant legal and regulatory requirements, including any licenses or approvals that may be required in the jurisdictions where we operate. We understand that the cryptocurrency industry is subject to a rapidly evolving regulatory environment, and we are committed to staying abreast of all developments and changes to ensure that we are in compliance with all relevant laws and regulations.
+
+As of the writing of this white paper, we are actively working to obtain any necessary licenses or approvals required to operate Kruger Rand Bitcoin in the jurisdictions where we intend to offer our services. We are collaborating with legal experts and regulatory authorities to ensure that we are in compliance with all applicable laws and regulations.
+
+To comply with know-your-customer (KYC) and anti-money laundering (AML) regulations, we have implemented a comprehensive KYC and AML compliance program. This program is designed to identify and prevent any potential illegal activities on our platform, and we take our responsibility to combat illicit financial activities very seriously.
+
+We also recognize the importance of data privacy and security. We have implemented strict security protocols to safeguard our users' personal and financial data, including multi-factor authentication, cold storage of funds, and regular security audits. We are committed to protecting our users' privacy and ensuring that their personal and financial information is kept secure.
+
+Overall, we believe that our commitment to transparency, security, and compliance will help to build trust and confidence in Kruger Rand Bitcoin among investors and regulators alike. By complying with all relevant legal and regulatory requirements, we are able to provide our users with a safe, reliable, and compliant platform for storing and transferring their wealth.
+
+We invite you to join us on this exciting journey by investing in Kruger Rand Bitcoin and becoming a part of our growing community. With our focus on compliance, security, and transparency, we believe that Kruger Rand Bitcoin has the potential to become a leading digital currency for investors around the world. Thank you for considering Kruger Rand Bitcoin, and we look forward to working with you to make this project a success.
+
+## Design Principles
+Design principles are the guiding values and concepts that inform the development and implementation of a cryptocurrency. Here are the design principles for Kruger Rand Bitcoin:
+
+* Stability: The primary design principle for Kruger Rand Bitcoin is stability. The cryptocurrency is designed to be tied to the price of gold, providing a stable and reliable store of value for investors.
+* Security: Security is another key design principle for Kruger Rand Bitcoin. The cryptocurrency includes a range of security features, including multi-factor authentication, cold storage of funds, and regular security audits, to ensure that users' funds are protected against hacking and other security threats.
+* Accessibility: Kruger Rand Bitcoin is designed
+
+## Consensus and Validator Quorum
+Consensus and validator quorum are important components of a cryptocurrency's blockchain network. Here is how they apply to Kruger Rand Bitcoin:
+
+* Consensus: Kruger Rand Bitcoin uses the proof-of-work (PoW) consensus algorithm, which is the same algorithm used by the Bitcoin blockchain. In the PoW algorithm, miners compete to solve a complex mathematical problem, and the first miner to solve the problem is rewarded with newly minted coins. This process helps to ensure the security and reliability of the network by requiring a significant amount of computational power to be expended in order to validate transactions.
+* Validator Quorum: Validator quorum refers to the minimum number of validators required to validate a transaction on the network. In Kruger Rand Bitcoin, the validator quorum is set at a level that ensures the security and reliability of the network while also allowing for efficient transaction processing. Validators are responsible for verifying transactions and adding them to the blockchain, and they are rewarded for their work with newly minted coins.
+
+Overall, the use of the PoW consensus algorithm and a validator quorum in Kruger Rand Bitcoin helps to ensure that the network is secure, reliable, and efficient, while also providing rewards to participants for their contributions to the network.
 
 ## Proof of Staked Authority
+Proof of Staked Authority (PoSA) is a consensus algorithm that combines elements of both proof-of-stake (PoS) and delegated proof-of-stake (DPoS) algorithms. Here's how it applies to Kruger Rand Bitcoin:
 
-Although Proof-of-Work (PoW) has been recognized as a practical mechanism to implement a decentralized network, it is not friendly to the environment and also requires a large size of participants to maintain the security.
+Kruger Rand Bitcoin is primarily built on the proof-of-work (PoW) consensus algorithm, but it also includes a PoSA system for staking KRB tokens. Users who stake KRB tokens in a designated wallet become validators on the network, which means they are responsible for verifying transactions and adding them to the blockchain.
+In the PoSA system, validators are selected based on the number of KRB tokens they have staked. The more tokens a user stakes, the more likely they are to be selected as a validator. Validators are also subject to a performance review process, where their performance in validating transactions is evaluated by other validators on the network.
 
-Ethereum and some other blockchain networks, such as [MATIC Bor](https://github.com/maticnetwork/bor), [TOMOChain](https://tomochain.com/), [GoChain](https://gochain.io/), [xDAI](https://xdai.io/), do use [Proof-of-Authority(PoA)](https://en.wikipedia.org/wiki/Proof_of_authority) or its variants in different scenarios, including both testnet and mainnet. PoA provides some defense to 51% attack, with improved efficiency and tolerance to certain levels of Byzantine players (malicious or hacked). It serves as an easy choice to pick as the fundamentals.
+The use of PoSA in Kruger Rand Bitcoin provides several benefits, including:
 
-Meanwhile, the PoA protocol is most criticized for being not as decentralized as PoW, as the validators, i.e. the nodes that take turns to produce blocks, have all the authorities and are prone to corruption and security attacks. Other blockchains, such as EOS and Lisk both, introduce different types of [Delegated Proof of Stake (DPoS)](https://en.bitcoinwiki.org/wiki/DPoS) to allow the token holders to vote and elect the validator set. It increases the decentralization and favors community governance.
+* Increased efficiency: By using a PoSA system for staking, Kruger Rand Bitcoin is able to process transactions more quickly and efficiently than a pure PoW system.
+* Increased security: The PoSA system ensures that validators have a stake in the network's success, which incentivizes them to act in the best interests of the network.
+* Reduced energy consumption: By using a PoSA system, Kruger Rand Bitcoin is able to reduce its energy consumption compared to a pure PoW system, which can be very energy-intensive.
 
-BSC here proposes to combine DPoS and PoA for consensus, so that:
-1. Blocks are produced by a limited set of validators
-2. Validators take turns to produce blocks in a PoA manner, similar to [Ethereum’s Clique](https://eips.ethereum.org/EIPS/eip-225) consensus design
-3. Validator set are elected in and out based on a staking based governance
+Overall, the use of PoSA in Kruger Rand Bitcoin provides a unique and innovative approach to consensus, offering the benefits of both PoS and DPoS algorithms while also reducing energy consumption and improving network efficiency and security.
 
 ## Validator Quorum
+Validator quorum refers to the minimum number of validators required to achieve consensus in a proof-of-stake (PoS) or delegated proof-of-stake (DPoS) blockchain network. In Kruger Rand Bitcoin, the validator quorum is the minimum number of validators required to validate transactions and add them to the blockchain.
+Kruger Rand Bitcoin uses a PoSA system for staking KRB tokens and selecting validators on the network. The validator quorum in Kruger Rand Bitcoin is set to a minimum of two-thirds of all validators on the network. This means that at least two-thirds of all validators on the network must agree on a transaction before it can be added to the blockchain.
 
-In the genesis stage, a few trusted nodes will run as the initial Validator Set. After the blocking starts, anyone can compete to join as candidates to elect as a validator. The staking status decides the top 21 most staked nodes to be the next validator set, and such an election will repeat every 24 hours.
+The use of a validator quorum in Kruger Rand Bitcoin provides several benefits, including:
 
-**BNB** is the token used to stake for BSC.
+* Improved security: By requiring a minimum number of validators to agree on a transaction, Kruger Rand Bitcoin is able to reduce the risk of a malicious actor manipulating the network.
+* Increased decentralization: The validator quorum ensures that the network is not controlled by a single entity, as a minimum number of validators are required to achieve consensus.
+* Reduced latency: The use of a validator quorum can help to reduce the time it takes to confirm transactions, as a minimum number of validators are required to reach consensus.
 
-In order to remain as compatible as Ethereum and upgradeable to future consensus protocols to be developed, BSC chooses to rely on the **BC** for staking management (Please refer to the below “[Staking and Governance](#staking-and-governance)” section). There is a **dedicated staking module for BSC on BC**. It will accept BSC staking from BNB holders and calculate the highest staked node set. Upon every UTC midnight, BC will issue a verifiable `ValidatorSetUpdate` cross-chain message to notify BSC to update its validator set.
-
-While producing further blocks, the existing BSC validators check whether there is a `ValidatorSetUpdate` message relayed onto BSC periodically. If there is, they will update the validator set after an **epoch period**, i.e. a predefined number of blocking time. For example, if BSC produces a block every 5 seconds, and the epoch period is 240 blocks, then the current validator set will check and update the validator set for the next epoch in 1200 seconds (20 minutes).
+Overall, the validator quorum in Kruger Rand Bitcoin plays a crucial role in ensuring the security and decentralization of the network, while also helping to reduce latency and improve the overall efficiency of the system.
 
 ## Security and Finality
+Security and finality are two critical components of any blockchain network, including Kruger Rand Bitcoin.
 
-Given there are more than ½\*N+1 validators are honest, PoA based networks usually work securely and properly. However, there are still cases where certain amount Byzantine validators may still manage to attack the network, e.g. through the “[Clone Attack](https://arxiv.org/pdf/1902.10244.pdf)”. To secure as much as BC, BSC users are encouraged to wait until receiving blocks sealed by more than ⅔\*N+1 different validators. In that way, the BSC can be trusted at a similar security level to BC and can tolerate less than ⅓\*N Byzantine validators.
+* Security: Kruger Rand Bitcoin employs several security measures to ensure the safety and integrity of the network. These measures include multi-factor authentication, cold storage of funds, and regular security audits. The platform is designed to be secure and resistant to hacking attempts and other security threats.
+* Finality: In blockchain networks, finality refers to the point at which a transaction becomes irreversible and cannot be changed. In Kruger Rand Bitcoin, finality is achieved through the use of a consensus algorithm and validator quorum. When a transaction is validated and added to the blockchain by a minimum number of validators, it becomes final and cannot be changed. This ensures the integrity of the network and prevents double-spending and other fraudulent activities.
 
-With 21 validators, if the block time is 5 seconds, the ⅔\*N+1 different validator seals will need a time period of (⅔\*21+1)*5 = 75 seconds. Any critical applications for BSC may have to wait for ⅔\*N+1 to ensure a relatively secure finality. However, besides such arrangement, BSC does introduce **Slashing** logic to penalize Byzantine validators for **double signing** or **inavailability**, which will be covered in the “Staking and Governance” section later. This Slashing logic will expose the malicious validators in a very short time and make the “Clone Attack” very hard or extremely non-beneficial to execute. With this enhancement, ½\*N+1 or even fewer blocks are enough as confirmation for most transactions.
+Kruger Rand Bitcoin's focus on security and finality provides several benefits to users, including:
 
-## Reward
+* Trust and confidence: By ensuring the safety and security of the network, Kruger Rand Bitcoin instills trust and confidence in users.
+* * Protection against fraud: The finality of transactions on the network helps to prevent fraudulent activities, such as double-spending.
+* Immune to manipulation: Kruger Rand Bitcoin's security measures help to protect the network from malicious actors who may attempt to manipulate the system.
 
-All the BSC validators in the current validator set will be rewarded with transaction **fees in BNB**. As BNB is not an inflationary token, there will be no mining rewards as what Bitcoin and Ethereum network generate, and the gas fee is the major reward for validators. As BNB is also utility tokens with other use cases, delegators and validators will still enjoy other benefits of holding BNB.
+Overall, the combination of security and finality in Kruger Rand Bitcoin helps to create a reliable and trustworthy platform for users to store and transfer wealth.
+Reward
 
-The reward for validators is the fees collected from transactions in each block. Validators can decide how much to give back to the delegators who stake their BNB to them, in order to attract more staking. Every validator will take turns to produce the blocks in the same probability (if they stick to 100% liveness), thus, in the long run, all the stable validators may get a similar size of the reward. Meanwhile, the stakes on each validator may be different, so this brings a counter-intuitive situation that more users trust and delegate to one validator, they potentially get less reward. So rational delegators will tend to delegate to the one with fewer stakes as long as the validator is still trustful (insecure validator may bring slashable risk). In the end, the stakes on all the validators will have less variation. This will actually prevent the stake concentration and “winner wins forever” problem seen on some other networks.
+In Kruger Rand Bitcoin, users can earn rewards for contributing to the security and stability of the network. There are two primary ways in which users can earn rewards:
 
-Some parts of the gas fee will also be rewarded to relayers for Cross-Chain communication. Please refer to the “[Relayers](#relayers)” section below.
+* Mining: Users can earn rewards by contributing computational power to the network through mining. This process involves solving complex mathematical equations to validate transactions and add them to the blockchain. As a reward for their contributions, miners receive a certain number of KRB tokens.
+* Staking: Users can also earn rewards through staking, which involves holding KRB in a designated wallet and contributing to the security and stability of the network. When users stake their KRB, they become validators, responsible for verifying and validating transactions on the network. In exchange for their contributions, validators receive a portion of the transaction fees generated on the network.
 
-# Token Economy
+The rewards earned through mining and staking provide an incentive for users to contribute to the security and stability of the network. This helps to ensure that the network is robust and resilient, and provides benefits to all users.
 
-BC and BSC share the same token universe for BNB and BEP2 tokens. This defines:
+Furthermore, the ability to earn rewards through mining and staking makes Kruger Rand Bitcoin an attractive investment option for individuals and businesses seeking a way to earn passive income. By participating in the network and contributing to its growth and stability, users can earn a reliable and consistent return on their investment.
 
-1. The same token can circulate on both networks, and flow between them bi-directionally     via a cross-chain communication mechanism.
-2. The total circulation of the same token should be managed across the two networks, i.e. the total effective supply of a token should be the sum of the     token’s total effective supply on both BSC and BC.
-3. The tokens can be initially created on BSC in a similar format as ERC20 token standard, or on BC as a BEP2, then created on the other. There are native ways on both networks to link the two and secure the total supply of the token.
+## Token Economy
+The token economy of Kruger Rand Bitcoin is designed to create a sustainable and thriving ecosystem that provides value to all participants. The primary token used within the ecosystem is KRB, an ERC-20 token built on the Ethereum blockchain. KRB is used for transactions within the Kruger Rand Bitcoin platform and can be stored in any Ethereum-compatible wallet.
+
+To ensure the long-term success of the platform, we have implemented several key features within the token economy:
+
+* Tied to Gold: KRB is tied to the price of gold, providing a stable and reliable store of value that is not subject to the volatility and risks associated with many other cryptocurrencies.
+Transactional Use: KRB can be used to facilitate transactions within the Kruger Rand Bitcoin ecosystem, providing a fast and cost-effective way to transfer value.
+* Staking Rewards: Users who hold KRB in a designated wallet and contribute to the security and stability of the network through staking are rewarded with a portion of the transaction fees generated on the network.
+* Lower Fees: Compared to traditional financial institutions and many other cryptocurrencies, Kruger Rand Bitcoin offers lower transaction fees, making KRB a cost-effective way to store and transfer wealth.
+
+The token economy of Kruger Rand Bitcoin is designed to provide a wide range of benefits to users and investors. By tying the value of KRB to the price of gold, we offer a stable and reliable store of value that is not subject to the volatility and risks associated with many other cryptocurrencies. The transactional use of KRB provides a fast and cost-effective way to transfer value, while the staking rewards and lower fees make KRB an attractive investment option for individuals and businesses seeking a way to earn passive income.
+
+Overall, we believe that the token economy of Kruger Rand Bitcoin provides a solid foundation for the long-term success of the platform, and we are committed to ensuring that it continues to evolve and adapt to the changing needs of our users and investors.
 
 ## Native Token
+Kruger Rand Bitcoin has a native token called KRB, which is an ERC-20 token built on the Ethereum blockchain. KRB is the primary token used within the Kruger Rand Bitcoin ecosystem, and it has several key features that make it an attractive investment option for users and investors.
 
-BNB will run on BSC in the same way as ETH runs on Ethereum so that it remains as “native token” for both BSC and BC. This means, in addition to BNB is used to pay most of the fees on Binance Chain and Binance DEX, BNB will be also used to:
+One of the most notable features of KRB is that it is tied to the price of gold, providing a stable and reliable store of value that is not subject to the volatility and risks associated with many other cryptocurrencies. This makes KRB an attractive investment option for individuals and businesses seeking a safe and secure way to protect their wealth.
 
-1. pay “fees“ to deploy smart contracts on BSC
-2. stake on selected BSC validators, and get corresponding rewards
-3. perform cross-chain operations, such as transfer token assets across BC and BSC
+In addition to its stability, KRB is also designed to be used within the Kruger Rand Bitcoin ecosystem for transactions, staking, and other activities. Users can acquire KRB through mining, exchanges, or staking, and they can use it to facilitate transactions within the platform. Staking involves holding KRB in a designated wallet and contributing to the security and stability of the network. In exchange for staking, users are rewarded with a portion of the transaction fees generated on the network.
 
-### Seed Fund
+Overall, the native token of Kruger Rand Bitcoin plays a crucial role in the functioning of the ecosystem. It provides a stable and reliable store of value for users and investors, while also facilitating transactions and contributing to the security and stability of the network through staking. As the platform continues to evolve and grow, we expect that the native token will play an increasingly important role in driving the success and adoption of Kruger Rand Bitcoin.
 
-Certain amounts of BNB will be burnt on BC and minted on BSC during its genesis stage. This amount is called “Seed Fund” to circulate on BSC after the first block, which will be dispatched to the initial BC-to-BSC Relayer(described in later sections) and initial validator set introduced at genesis. These BNBs are used to pay transaction fees in the early stage to transfer more BNB from BC onto BSC via the cross-chain mechanism.
+## Seed Fund
+A seed fund is an investment fund that provides early-stage funding to startups and new projects. In the context of a cryptocurrency project like Kruger Rand Bitcoin, a seed fund can play a critical role in providing the initial capital needed to get the project off the ground.
 
-The BNB cross-chain transfer is discussed in a later section, but for BC to BSC transfer, it is generally to lock BNB on BC from the source address of the transfer to a system-controlled address and unlock the corresponding amount from special contract to the target address of the transfer on BSC, or reversely, when transferring from BSC to BC, it is to lock BNB from the source address on BSC into a special contract and release locked amount on BC from the system address to the target address. The logic is related to native code on BC and a series of smart contracts on BSC.
+Seed funding can come from a variety of sources, including angel investors, venture capitalists, and crowdfunding campaigns. The funds raised through a seed fund can be used to cover the initial costs of developing the platform, building the team, and marketing the project to potential investors.
+
+For Kruger Rand Bitcoin, a seed fund could provide the necessary funding to cover the costs of developing the platform, building partnerships, and marketing the project to potential investors. This initial capital could help to jumpstart the project and provide the momentum needed to attract further investment and build a strong and sustainable ecosystem.
+
+Seed funding can also provide valuable validation for the project, demonstrating to potential investors and stakeholders that there is a strong demand for the concept and a willingness to invest in its success. This can help to build confidence in the project and attract additional investment over time.
+
+Overall, a seed fund can be a crucial component of the early-stage funding for a cryptocurrency project like Kruger Rand Bitcoin. By providing the initial capital needed to get the project off the ground, a seed fund can help to jumpstart the project, build momentum, and attract additional investment and support over time.
 
 ## Other Tokens
+In addition to the native token of a cryptocurrency project like Kruger Rand Bitcoin, there may be other tokens that play a role in the ecosystem. These tokens may serve different functions and have different properties than the native token, and may be used to incentivize specific behaviors or provide access to certain features.
 
-BC supports BEP2 tokens and upcoming [BEP8 tokens](https://github.com/binance-chain/BEPs/pull/69), which are native assets transferrable and tradable (if listed) via fast transactions and sub-second finality. Meanwhile, as BSC is Ethereum compatible, it is natural to support ERC20 tokens on BSC, which here is called “**BEP2E**” (with the real name to be introduced by the future BEPs,it potentially covers BEP8 as well). BEP2E may be “Enhanced” by adding a few more methods to expose more information, such as token denomination, decimal precision definition and the owner address who can decide the Token Binding across the chains. BSC and BC work together to ensure that one token can circulate in both formats with confirmed total supply and be used in different use cases.
+For example, Kruger Rand Bitcoin may choose to create a governance token that allows holders to participate in the decision-making process for the platform. This governance token may be used to vote on proposals, elect representatives, or make other important decisions that impact the direction of the project.
 
-### Token Binding
+Another type of token that may be used in the Kruger Rand Bitcoin ecosystem is a utility token. Utility tokens are designed to provide access to specific features or services within the platform, and may be earned or purchased by users who want to take advantage of these features.
 
-BEP2 tokens will be extended to host a new attribute to associate the token with a BSC BEP2E  token contract, called “**Binder**”, and this process of association is called “**Token Binding**”.
+Other tokens that may be used in the Kruger Rand Bitcoin ecosystem include security tokens, asset-backed tokens, and stablecoins. Each of these token types has its own unique properties and use cases, and may be used to provide additional functionality or liquidity to the platform.
 
-Token Binding can happen at any time after BEP2 and BEP2E are ready. The token owners of either BEP2 or BEP2E don’t need to bother about the Binding, until before they really want to use the tokens on different scenarios. Issuers can either create BEP2 first or BEP2E first, and they can be bound at a later time. Of course, it is encouraged for all the issuers of BEP2 and BEP2E to set the Binding up early after the issuance.
+Overall, the use of other tokens in the Kruger Rand Bitcoin ecosystem can help to provide additional functionality and value to users, while also incentivizing specific behaviors and providing new opportunities for investment and growth. As the ecosystem develops, additional token types may be introduced to further enhance the functionality and utility of the platform.
 
-A typical procedure to bind the BEP2 and BEP2E will be like the below:
+## Token Binding
+Token binding refers to the practice of tying a cryptocurrency token to a specific asset or commodity in order to provide a stable and reliable store of value. In the case of Kruger Rand Bitcoin, the native token KRB is tied to the price of gold, meaning that its value is directly linked to the current market value of gold.
+Token binding is often used as a way to mitigate the volatility and risk associated with many cryptocurrencies. By tying a token to a stable asset or commodity, investors can be more confident in its long-term value and stability, making it a more attractive investment option.
 
-1. Ensure both the BEP2 token and the BEP2E token both exist on each blockchain, with the same total supply. BEP2E should have 3 more methods than typical ERC20 token standard:
-    *  symbol(): get token symbol
-    *  decimals(): get the number of the token decimal digits
-    *  owner(): get **BEP2E contract owner’s address.** This value should be initialized in the BEP2E contract constructor so that the further binding action can verify whether the action is from the BEP2E owner.
+In the case of Kruger Rand Bitcoin, token binding is achieved through the use of a unique algorithm that allows the value of KRB to automatically adjust based on the current price of gold. This algorithm is designed to ensure that KRB remains a stable and reliable store of value, even in the face of market fluctuations and other economic factors.
 
-2. Decide the initial circulation on both blockchains. Suppose the total supply is *S*, and the expected initial circulating supply on BC is *K*, then the owner should lock S-K tokens to a system controlled address on BC.
+Overall, token binding is an important design principle for cryptocurrencies like Kruger Rand Bitcoin, as it helps to provide stability and reliability to investors, while also ensuring that the token remains useful and valuable in a rapidly evolving market.
 
-3. Equivalently, *K* tokens is locked in the special contract on BSC, which handles major binding functions and is named as **TokenHub**. The issuer of the BEP2E token should lock the *K* amount of that token into TokenHub, resulting in *S-K* tokens to circulate on BSC. Thus the total circulation across 2 blockchains remains as *S*.
+## Cross-Chain Transfer and Communication
+Cross-chain transfer and communication refer to the ability of a cryptocurrency to interact with other blockchain networks, allowing for the seamless transfer of assets and data across different platforms. This is an important feature for cryptocurrencies like Kruger Rand Bitcoin, as it enables greater interoperability and connectivity with other networks, ultimately expanding the potential use cases for the currency.
 
-4. The issuer of BEP2 token sends the bind transaction on BC. Once the transaction is executed successfully after proper verification:
-    * It transfers *S-K* tokens to a system-controlled address on BC.
-    * A cross-chain bind request package will be created, waiting for Relayers to relay.
+One way to achieve cross-chain transfer and communication is through the use of interoperability protocols such as Atomic Swaps or cross-chain bridges. These protocols allow for the secure and seamless transfer of assets between different blockchain networks, making it possible to move KRB between different platforms and even exchange it for other cryptocurrencies or assets.
 
-5. BSC Relayers will relay the cross-chain bind request package into **TokenHub** on BSC, and the corresponding request and information will be stored into the contract.
+Another way to facilitate cross-chain transfer and communication is through the use of oracle services, which provide real-time data and information about the value of KRB and other cryptocurrencies. This information can be used to inform smart contracts and other decentralized applications, enabling greater connectivity and functionality between different blockchain networks.
 
-6. The contract owner and only the owner can run a special method of TokenHub contract, `ApproveBind`, to verify the binding request to mark it as a success. It will confirm:
-    * the token has not been bound;
-    * the binding is for the proper symbol, with proper total supply and decimal information;
-    * the proper lock are done on both networks;
-
-10. Once the `ApproveBind` method has succeeded, TokenHub will mark the two tokens are bounded and share the same circulation on BSC, and the status will be propagated back to BC. After this final confirmation, the BEP2E contract address and decimals will be written onto the BEP2 token as a new attribute on BC, and the tokens can be transferred across the two blockchains bidirectionally. If the ApproveBind fails, the  failure event will also be propagated back to BC to release the locked tokens, and the above steps can be re-tried later.
-
-# Cross-Chain Transfer and Communication
-Cross-chain communication is the key foundation to allow the community to take advantage of the dual chain structure:
-
-* users are free to create any tokenization, financial products, and digital assets on BSC or BC as they wish
-* the items on BSC can be manually and programmingly traded and circulated in a stable, high throughput, lighting fast and friendly environment of BC
-* users can operate these in one UI and tooling ecosystem.
+Overall, the ability to facilitate cross-chain transfer and communication is an important feature for cryptocurrencies like Kruger Rand Bitcoin, as it allows for greater interoperability, functionality, and connectivity with other blockchain networks, ultimately expanding the potential use cases and adoption of the currency.
 
 ## Cross-Chain Transfer
+Cross-chain transfer refers to the ability to transfer assets or value between different blockchain networks. This is an important feature for cryptocurrencies like Kruger Rand Bitcoin, as it allows for greater interoperability and connectivity with other networks, ultimately expanding the potential use cases for the currency.
+One way to achieve cross-chain transfer is through the use of interoperability protocols such as Atomic Swaps or cross-chain bridges. These protocols allow for the secure and seamless transfer of assets between different blockchain networks, making it possible to move KRB between different platforms and even exchange it for other cryptocurrencies or assets.
 
-The cross-chain transfer is the key communication between the two blockchains. Essentially the logic is:
+Atomic Swaps allow for peer-to-peer trading of cryptocurrencies across different blockchain networks, without the need for intermediaries or centralized exchanges. This is achieved through the use of smart contracts that automate the process of transferring assets between different networks, ensuring that the transaction is secure and reliable.
 
-1. the `transfer-out` blockchain will lock the amount from source owner addresses into a system controlled address/contracts;
-2. the `transfer-in` blockchain will unlock the amount from the system controlled address/contracts and send it to target addresses.
+Cross-chain bridges, on the other hand, are a type of protocol that connects two different blockchain networks, allowing for the transfer of assets between them. This is achieved through the use of special tokens that represent the value of the asset on the other network, which can be exchanged or transferred back and forth between the two networks.
 
-The cross-chain transfer package message should allow the BSC Relayers and BC **Oracle Relayers** to verify:
+Overall, the ability to facilitate cross-chain transfer is an important feature for cryptocurrencies like Kruger Rand Bitcoin, as it allows for greater interoperability and connectivity with other blockchain networks, ultimately expanding the potential use cases and adoption of the currency.
+## KRB Architecture
+KRB (Kruger Rand Bitcoin) is an ERC-20 token built on the Ethereum blockchain. The architecture of KRB is designed to support its primary features, including its tie to the price of gold, its transactional use, and its staking rewards.
 
-1. Enough amount of token assets are removed from the source address and locked into a system controlled addresses/contracts on the source blockchain. And this can be confirmed on the target blockchain.
-2. Proper amounts of token assets are released from a system controlled addresses/contracts and allocated into target addresses on the target blockchain. If this fails, it can be confirmed on source blockchain, so that the locked token can be released back (may deduct fees).
-3. The sum of the total circulation of the token assets across the 2 blockchains are not changed after this transfer action completes, no matter if the transfer succeeds or not.
+The KRB architecture is based on the Ethereum blockchain, which provides a secure and reliable platform for the token. KRB uses smart contracts to facilitate its tie to the price of gold, as well as its transactional and staking features. These smart contracts are executed on the Ethereum Virtual Machine (EVM), which provides a secure and reliable environment for the execution of decentralized applications.
 
-![cross-chain](./assets/cross-chain.png)
+KRB also makes use of the Ethereum network's consensus mechanism, which is based on Proof of Work (PoW) mining. However, KRB plans to transition to a Proof of Stake (PoS) consensus mechanism in the future, which will help to reduce the energy consumption associated with mining and improve the overall efficiency of the network.
+In terms of tokenomics, KRB has a fixed supply of tokens, with no new tokens being created over time. This means that the total supply of KRB is finite, which helps to ensure its value as a store of value. Additionally, KRB can be acquired through mining, exchanges, or staking, providing users with multiple ways to acquire and use the token within the Kruger Rand Bitcoin ecosystem.
 
-The architecture of cross-chain communication is as in the above diagram. To accommodate the 2 heteroid systems, communication handling is different in each direction.
-
-## BC to BSC Architecture
-
-BC is a Tendermint-based, instant finality blockchain. Validators with at least ⅔\*N+1 of the total voting power will co-sign each block on the chain. So that it is practical to verify the block transactions and even the state value via **Block Header** and **Merkle Proof** verification. This has been researched and implemented as “**Light-Client Protocol**”, which are intensively discussed in [the Ethereum](https://github.com/ethereum/wiki/wiki/Light-client-protocol) community, studied and implemented for [Cosmos inter-chain communication](https://github.com/cosmos/ics/blob/a4173c91560567bdb7cc9abee8e61256fc3725e9/spec/ics-007-tendermint-client/README.md).
-
-BC-to-BSC communication will be verified in an “**on-chain light client**” implemented via BSC **Smart Contracts** (some of them may be **“pre-compiled”**). After some transactions and state change happen on BC, if a transaction is defined to trigger cross-chain communication,the Cross-chain “**package**” message will be created and **BSC Relayers** will pass and submit them onto BSC as data into the "build-in system contracts". The build-in system contracts will verify the package and execute the transactions if it passes the verification. The verification will be guaranteed with the below design:
-
-1. BC blocking status will be synced to the light client contracts on BSC from time to time, via     block header and pre-commits, for the below information:
-    * block and app hash of BC that are signed by validators
-    * current validatorset, and validator set update
-
-2. the key-value from the blockchain state will be verified based on the Merkle     Proof and information from above #1.
-
-After confirming the key-value is accurate and trustful, the build-in system contracts will execute the actions corresponding to the cross-chain packages. Some examples of such packages that can be created for BC-to-BSC are:
-
-1. Bind: bind the BEP2 tokens and BEP2E
-2. Transfer: transfer tokens after binding, this means the circulation will decrease (be locked)     from BC and appear in the target address balance on BSC
-3. Error Handling: to handle any timeout/failure event for BSC-to-BC communication
-4. Validatorset update of BSC
-
-To ensure no duplication, proper message sequence and timely timeout, there is a “Channel” concept introduced on BC to manage any types of the communication.
-
-For relayers, please also refer to the below “Relayers” section.
-
-## BSC to BC Architecture
-
-BSC uses Proof of Staked Authority consensus protocol, which has a chance to fork and requires confirmation of more blocks. One block only has the signature of one validator, so that it is not easy to rely on one block to verify data from BSC.
-
-To take full advantage of validator quorum of BC, an idea similar to many [Bridge ](https://github.com/poanetwork/poa-bridge)or Oracle blockchains is adopted:
-
-1. The cross-chain communication requests from BSC will be submitted and executed onto BSC as transactions. The execution of the transanction wil emit `Events`, and such events can be observed and packaged in certain “**Oracle**” onto BC. Instead of Block Headers, Hash and Merkle Proof, this type of “Oracle” package directly contains the cross-chain information for actions, such as sender, receiver and amount for transfer.
-2. To ensure the security of the Oracle, the validators of BC will form anothe quorum of “**Oracle Relayers**”. Each validator of the BC should run a **dedicated process** as the Oracle Relayer. These Oracle Relayers will submit and  vote for the cross-chain communication package, like Oracle, onto BC,  using the same validator keys. Any package signed by more than ⅔\*N+1 Oracle Relayers’ voting power is as secure as any block signed by ⅔\*N+1 of     the same quorum of validators’ voting power.
-
-By using the same validator quorum, it saves the light client code on BC and continuous block updates onto BC. Such Oracles also have Oracle IDs and types, to ensure sequencing and proper error handling.
+Overall, the architecture of KRB is designed to support its primary features and provide a secure and reliable platform for users to transact and stake their tokens. The use of the Ethereum blockchain and smart contracts helps to ensure the security and reliability of the token, while the fixed supply and multiple acquisition methods make it an attractive investment option for users seeking a stable and reliable store of value.
 
 ## Timeout and Error Handling
+Timeout and error handling are critical aspects of any cryptocurrency network, including Kruger Rand Bitcoin. To ensure that the network operates smoothly and efficiently, we have implemented a range of timeout and error handling mechanisms.
 
-There are scenarios that the cross-chain communication fails. For example, the relayed package cannot be executed on BSC due to some coding bug in the contracts. **Timeout and error handling logics are** used in such scenarios.
+Timeouts are used to ensure that nodes on the network are responsive and functioning properly. If a node fails to respond within a specified period of time, it will be considered unresponsive and removed from the network. This helps to ensure that the network operates smoothly and efficiently, without delays or disruptions.
+In addition to timeouts, we have also implemented a range of error handling mechanisms to ensure that the network can quickly and efficiently recover from errors or failures. These mechanisms include automatic error detection and recovery, as well as redundancy and failover systems to ensure that the network remains operational even in the event of a failure or outage.
 
-For the recognizable user and system errors or any expected exceptions, the two networks should heal themselves. For example, when BC to BSC transfer fails, BSC will issue a failure event and Oracle Relayers will execute a refund on BC; when BSC to BC transfer fails, BC will issue a refund package for Relayer to relay in order to unlock the fund.
-
-However, unexpected error or exception may still happen on any step of the cross-chain communication. In such a case, the Relayers and Oracle Relayers will discover that the corresponding cross-chain channel is stuck in a particular sequence. After a Timeout period, the Relayers and Oracle Relayers can request a “SkipSequence” transaction, the stuck sequence will be marked as “Unexecutable”. A corresponding alerts will be raised, and the community has to discuss how to handle this scenario, e.g. payback via the sponsor of the validators, or event clear the fund during next network upgrade.
+Overall, our approach to timeout and error handling is designed to ensure that the Kruger Rand Bitcoin network operates smoothly and efficiently, with minimal disruptions or delays. By implementing robust and reliable timeout and error handling mechanisms, we are able to provide a stable and reliable platform for users to store and transfer their wealth.
 
 ## Cross-Chain User Experience
+Cross-chain user experience is an important consideration for any cryptocurrency project, including Kruger Rand Bitcoin. The ability for users to seamlessly transfer assets between different blockchain networks is critical for creating a truly interoperable and connected ecosystem.
 
-Ideally, users expect to use two parallel chains in the same way as they use one single chain. It requires more aggregated transaction types to be added onto the cross-chain communication to enable this, which will add great complexity, tight coupling, and maintenance burden. Here BC and BSC only implement the basic operations to enable the value flow in the initial launch and leave most of the user experience work to client side UI, such as wallets. E.g. a great wallet may allow users to sell a token directly from BSC onto BC’s DEX order book, in a secure way.
+To ensure a smooth cross-chain user experience, Kruger Rand Bitcoin has implemented a range of features and technologies designed to simplify the process of transferring assets between different blockchains. These include:
+
+* User-Friendly Interface: Kruger Rand Bitcoin's user interface is designed to be intuitive and user-friendly, with clear instructions and guidance for users looking to transfer assets between different blockchains.
+* Standardized Token Formats: Kruger Rand Bitcoin utilizes standardized token formats to ensure compatibility with other blockchain networks, making it easy for users to transfer assets between different networks without the need for complex technical knowledge.
+* Automated Cross-Chain Swaps: Kruger Rand Bitcoin has implemented automated cross-chain swaps, which allow users to easily swap assets between different blockchains without the need for manual intervention. This helps to reduce the risk of errors or mistakes, and ensures a smooth and seamless transfer process.
+* Robust Security Measures: To ensure the security of cross-chain transfers, Kruger Rand Bitcoin has implemented a range of security measures, including multi-factor authentication, cold storage of funds, and regular security audits.
+* Interoperability with Other Networks: Kruger Rand Bitcoin is designed to be interoperable with other blockchain networks, allowing users to easily transfer assets between different networks and ecosystems. This helps to create a more connected and seamless blockchain ecosystem, with fewer barriers to entry and greater ease of use for users.
+
+Overall, our focus on creating a smooth and seamless cross-chain user experience is critical for the success of Kruger Rand Bitcoin, as it enables users to easily transfer assets between different networks and ecosystems, and provides a more connected and interoperable blockchain ecosystem for all users.
 
 ## Cross-Chain Contract Event
+Cross-chain contract events refer to the events that occur when a smart contract on one blockchain network triggers a transaction on another blockchain network. This is an important concept for cross-chain communication, as it enables the exchange of data and value between different blockchain networks.
 
-Cross-Chain Contract Event (CCCE) is designed to allow a smart contract to trigger cross-chain transactions, directly through the contract code. This becomes possible based on:
+In the context of Kruger Rand Bitcoin, cross-chain contract events allow for the seamless exchange of KRB tokens between different blockchain networks. For example, if a user wants to exchange KRB tokens for another cryptocurrency that is only available on a different blockchain network, a cross-chain contract event can be triggered to facilitate the transfer of tokens.
 
-1. Standard  system contracts can be provided to serve operations callable by general     smart contracts;
-2. Standard  events can be emitted by the standard contracts;
-3. Oracle Relayers can capture the standard events, and trigger the corresponding cross-chain operations;
-4. Dedicated, code-managed address (account) can be created on BC and accessed by the     contracts on the BSC, here it is named as **“Contract Address on BC” (CAoB)**.
+To ensure the smooth functioning of cross-chain contract events, the Kruger Rand Bitcoin ecosystem includes a timeout and error handling mechanism. This mechanism ensures that in case of any errors or delays, the transaction is automatically reverted after a specified period of time, and the user's funds are returned to their original wallet.
 
-Several standard operations are implemented:
+Additionally, Kruger Rand Bitcoin employs a robust error handling process to ensure that any issues related to cross-chain contract events are addressed promptly and efficiently. This includes regular audits and testing of the platform to identify and resolve any potential errors or vulnerabilities.
 
-1. BSC to BC transfer: this is implemented in the same way as normal BSC to BC transfer, by only triggered via standard contract. The fund can be transferred to any addresses on BC, including the corresponding CAoB of  the transfer originating contract.
-2. Transfer on BC: this is implemented as a special cross-chain transfer, while the  real transfer is from **CAoB** to any other address (even another CAoB).
-3. BC to BSC transfer: this is implemented as two-pass cross-chain communication. The     first is triggered by the BSC contract and propagated onto BC, and then in the second pass, BC will start a normal BC to BSC cross-chain transfer, from **CAoB** to contract address on BSC. A special note should be paid on that the BSC contract only increases balance upon any transfer coming in on the second pass, and the error handling in the second pass is the same as the normal BC to BSC transfer.
-4. IOC  (Immediate-Or-Cancel) Trade Out: the primary goal of transferring assets to BC is to trade. This event will instruct to trade a certain amount of an asset in CAoB into another asset as much as possible and transfer out     all the results, i.e. the left the source and the traded target tokens of     the trade, back to BSC. BC will handle such relayed events by sending an     “Immediate-Or-Cancel”, i.e. IOC order onto the trading pairs, once the next matching finishes, the result will be relayed back to BSC, which can be in either one or two assets.
-5. Auction Trade Out: Such event will instruct BC to send an auction order to trade a     certain amount of an asset in **CAoB** into another asset as much as possible and transfer out all the results back to BSC at the end of the auction. Auction function is upcoming on BC.
+Overall, cross-chain contract events are an essential component of the Kruger Rand Bitcoin ecosystem, enabling seamless communication and exchange of value between different blockchain networks. The timeout and error handling mechanism ensures that the process is smooth and reliable, while the error handling process ensures that any issues are addressed promptly and efficiently.
 
-There are some details for the Trade Out:
+## Staking and Governance
+Staking and Governance are key elements of the Kruger Rand Bitcoin ecosystem, allowing users to participate in the network and help to shape its future development.
 
-1. both can have a limit price (absolute or relative) for the trade;
-2. the end result will be written as cross-chain packages to relay back to BSC;
-3. cross-chain communication fees may be charged from the asset transferred back to BSC;
-4. BSC contract maintains a mirror of the balance and outstanding orders on CAoB. No     matter what error happens during the Trade Out, the final status will be  propagated back to the originating contract and clear its internal state.
+* Staking: Staking involves holding KRB tokens in a designated wallet and contributing to the security and stability of the network. In exchange for staking, users are rewarded with a portion of the transaction fees generated on the network. This provides an incentive for users to participate in the network and helps to ensure its security and reliability.
 
-With the above features, it simply adds the cross-chain transfer and exchange functions with high liquidity onto all the smart contracts on BSC. It will greatly add the application scenarios on Smart Contract and dApps, and make 1 chain +1 chain > 2 chains.
+To participate in staking, users simply need to hold KRB tokens in a designated wallet and follow the staking instructions provided by the Kruger Rand Bitcoin team. Users are free to unstake their tokens at any time, although there may be a waiting period before the tokens become available again.
 
-# Staking and Governance
+* Governance: Governance is the process by which users can participate in decision-making about the future development of the Kruger Rand Bitcoin ecosystem. Through a decentralized governance model, users are able to propose and vote on changes to the network, including changes to the protocol, fee structures, and other key elements.
 
-Proof of Staked Authority brings in decentralization and community involvement. Its core logic can be summarized as the below. You may see similar ideas from other networks, especially Cosmos and EOS.
+To participate in governance, users must hold a minimum number of KRB tokens in their wallet, which gives them the right to propose and vote on changes. Proposals are subject to a voting process, and changes are only implemented if they receive a certain level of support from the community.
 
-1. Token holders, including the validators, can put their tokens “**bonded**” into the stake. Token holders can **delegate** their tokens onto any validator or validator candidate, to expect it can become an actual validator, and later they can choose a different validator or candidate to **re-delegate** their tokens<sup>1</sup>.
-2. All validator candidates will be ranked by the number of bonded tokens on them, and the top ones will become the real validators.
-3. Validators can share (part of) their blocking reward with their delegators.
-4. Validators can suffer from “**Slashing**”, a punishment for their bad behaviors, such as double sign and/or instability.
-5. There is an “**unbonding period**” for validators and delegators so that the system makes sure the tokens remain bonded when bad behaviors are caught, the responsible will get slashed during this period.
+Overall, staking and governance are key elements of the Kruger Rand Bitcoin ecosystem, providing users with an opportunity to participate in the network and help to shape its future development. Through staking, users are able to contribute to the security and reliability of the network, while governance allows them to participate in decision-making about its future direction.
 
-## Staking on BC
+## Staking on KRB
+Staking is an important component of the Kruger Rand Bitcoin (KRB) ecosystem, as it plays a key role in securing the network and maintaining its stability. KRB uses a Proof-of-Stake consensus algorithm, which means that users can stake their KRB tokens to participate in the network and receive rewards for doing so.
 
-Ideally, such staking and reward logic should be built into the blockchain, and automatically executed as the blocking happens. Cosmos Hub, who shares the same Tendermint consensus and libraries with Binance Chain, works in this way.
+Staking on KRB is a simple process that involves holding KRB in a designated wallet and contributing to the security and stability of the network. To stake KRB, users simply need to hold their tokens in a designated wallet and configure their staking settings, including the amount of KRB they wish to stake and the length of time they wish to stake for.
 
-BC has been preparing to enable staking logic since the design days. On the other side, as BSC wants to remain compatible with Ethereum as much as possible, it is a great challenge and efforts to implement such logic on it. This is especially true when Ethereum itself may move into a different Proof of Stake consensus protocol in a short (or longer) time. In order to keep the compatibility and reuse the good foundation of BC, the staking logic of BSC is implemented on BC:
+When users stake their KRB, they are essentially locking up their tokens for a specified period of time, during which they cannot be used for other purposes. In exchange for staking, users are rewarded with a portion of the transaction fees generated on the network.
 
-1. The staking token is BNB, as it is a native token on both blockchains anyway
-2. The staking, i.e. token bond and delegation actions and records for BSC, happens on BC.
-3. The BSC validator set is determined by its staking and delegation logic, via a  staking module built on BC for BSC, and propagated every day UTC 00:00 from BC to BSC via Cross-Chain communication.
-4. The reward distribution happens on BC around every day UTC 00:00.
+Staking on KRB is designed to be accessible to users with a range of technical expertise, and we have implemented measures to ensure that the staking process is fair and transparent. Our staking rewards are designed to incentivize users to contribute to the security and stability of the network, while also providing a reliable and stable source of income for stakers.
+
+In addition to staking, KRB also has a robust governance system that allows users to participate in the decision-making process for the network. Our governance system is designed to be transparent and democratic, and allows users to propose and vote on changes to the network, as well as participate in other important decisions.
+
+Overall, we believe that staking and governance are critical components of the KRB ecosystem, and we are committed to ensuring that these systems are accessible, fair, and transparent for all users. By participating in staking and governance on KRB, users can contribute to the growth and success of the network, while also earning rewards for their participation.
 
 ## Rewarding
+On the Kruger Rand Bitcoin (KRB) platform, users can earn rewards by staking their KRB tokens. The staking process involves holding KRB tokens in a designated wallet and contributing to the security and stability of the network. In exchange for staking, users are rewarded with a portion of the transaction fees generated on the network.
 
-Both the validator update and reward distribution happen every day around UTC 00:00. This is to save the cost of frequent staking updates and block reward distribution. This cost can be significant, as the blocking reward is collected on BSC and distributed on BC to BSC validators and delegators. (Please note BC blocking fees will remain rewarding to BC validators only.)
+The rewards system on KRB is designed to incentivize users to participate in the network and contribute to its growth and development. The more KRB tokens a user stakes, the greater their share of the transaction fees and rewards.
 
- A deliberate delay is introduced here to make sure the distribution is fair:
+To ensure that the rewards system is fair and transparent, KRB uses a consensus algorithm called Proof of Staked Authority (PoSA). PoSA is a modified version of the Proof of Authority (PoA) consensus algorithm, in which validators are selected based on the amount of KRB tokens they have staked on the network.
 
-1. The blocking reward will not be sent to validator right away, instead, they will be distributed and accumulated on a contract;
-2. Upon receiving the validator set update into BSC, it will trigger a few cross-chain transfers to transfer the reward to custody addresses on the corresponding validators. The custody addresses are owned by the system so that the reward cannot be spent until the promised distribution to delegators happens.
-3. In order to make the synchronization simpler and allocate time to accommodate slashing, the reward for N day will be only distributed in N+2 days. After the delegators get the reward, the left will be transferred to validators’ own reward addresses.
+Validators on the KRB network are responsible for validating transactions and maintaining the security and stability of the network. In exchange for their services, validators are rewarded with a portion of the transaction fees generated on the network.
+
+In addition to rewards for staking and validating, KRB also has a governance system that allows users to participate in the decision-making process for the platform. KRB token holders can propose and vote on changes to the platform, including changes to the rewards system, and other key aspects of the platform.
+Overall, the rewards and governance systems on KRB are designed to incentivize user participation and promote the growth and development of the platform. By participating in staking and governance, users can earn rewards and have a say in the future direction of the KRB platform.
 
 ## Slashing
+Slashing is a mechanism implemented in KRB to discourage malicious behavior by network validators. Validators are responsible for maintaining the security and integrity of the network by verifying transactions and adding new blocks to the blockchain. In return, validators receive rewards in the form of KRB tokens.
+However, if a validator is found to be engaging in malicious behavior such as attempting to double-spend or creating invalid blocks, they may be subject to slashing. Slashing is a penalty mechanism that reduces the number of tokens that a validator can earn or even revokes their right to participate in the network altogether.
 
-Slashing is part of the on-chain governance, to ensure the malicious or negative behaviors are punished. BSC slash can be submitted by anyone. The transaction submission requires **slash evidence** and cost fees but also brings a larger reward when it is successful.
+In KRB, slashing is implemented through a combination of automatic and community-driven mechanisms. Validators who are found to be acting maliciously may have their stake reduced or removed entirely, and they may also be subject to additional penalties such as losing their reputation within the network.
 
-So far there are two slashable cases.
+To ensure the fair and transparent implementation of slashing, KRB incorporates a governance system that allows token holders to vote on changes to the slashing mechanism and other important network parameters. This allows the community to work together to maintain the security and integrity of the network and ensure that bad actors are punished appropriately.
 
-### Double Sign
+Overall, slashing is an important mechanism in KRB that helps to discourage malicious behavior and maintain the security and integrity of the network. By implementing a fair and transparent governance system, KRB ensures that the community has a say in how the network is operated and that validators are held accountable for their actions.
 
-It is quite a serious error and very likely deliberate offense when a validator signs more than one block with the same height and parent block. The reference protocol implementation should already have logic to prevent this, so only the malicious code can trigger this. When Double Sign happens, the validator should be removed from the Validator **Set** right away.
+## Double Sign
+Double signing is a potential issue that can occur in any proof-of-stake blockchain network, including KRB. Double signing refers to a validator signing two different blocks at the same height. This is a serious issue because it can compromise the integrity and security of the blockchain network.
 
-Anyone can submit a slash request on BC with the evidence of Double Sign of BSC, which should contain the 2 block headers with the same height and parent block, sealed by the offending validator. Upon receiving the evidence, if the BC verifies it to be valid:
+To prevent double signing, KRB implements a slashing mechanism. When a validator double signs, they will be penalized by having a portion of their staked tokens slashed. The amount of the penalty is determined by the severity of the offense and is proportional to the number of tokens the validator has staked.
 
-1. The validator will be removed from validator set by an instance BSC validator set update Cross-Chain update;
-2. A predefined amount of BNB would be slashed from the **self-delegated** BNB of the validator; Both validator and its delegators will not receive the staking rewards. 
-3. Part of the slashed BNB will allocate to the submitter’s address, which is a reward and larger than the cost of submitting slash request transaction
-4. The rest of the slashed BNB will allocate to the other validators’ custody addresses, and distributed to all delegators in the same way as blocking reward.
+In addition to the penalty, the validator will also lose their status as a validator and be removed from the validator set for a set period of time. During this period, they will not be able to participate in staking and will not be eligible to receive rewards.
 
-### Inavailability
+The slashing mechanism is a critical component of KRB's security model, as it provides a strong incentive for validators to act honestly and maintain the integrity of the network. By ensuring that validators are held accountable for their actions, KRB can maintain a secure and stable network that can be trusted by users and investors alike.
 
-The liveness of BSC relies on everyone in the Proof of Staked Authority validator set can produce blocks timely when it is their turn. Validators can miss their turn due to any reason, especially problems in their hardware, software, configuration or network. This instability of the operation will hurt the performance and introduce more indeterministic into the system.
+## Inavailability
 
-There can be an internal smart contract responsible for recording the missed blocking metrics of each validator. Once the metrics are above the predefined threshold, the blocking reward for validator will not be relayed to BC for distribution but shared with other better validators. In such a way, the poorly-operating validator should be gradually voted out of the validator set as their delegators will receive less or none reward. If the metrics remain above another higher level of threshold, the validator will be dropped from the rotation, and this will be propagated back to BC, then a predefined amount of BNB would be slashed from the **self-delegated** BNB of the validator. Both validators and delegators will not receive their staking rewards. 
+In the context of a blockchain network, unavailability refers to the situation when a validator node is unable to perform its duties as expected. This can happen due to various reasons, such as technical issues, network connectivity problems, or even intentional attacks.
 
-###  Governance Parameters
+In the case of Kruger Rand Bitcoin (KRB), the unavailability of validator nodes can have significant implications for the security and performance of the network. If a validator node is unavailable, it cannot participate in the consensus process, which can slow down the network and potentially compromise its security.
 
-There are many system parameters to control the behavior of the BSC, e.g. slash amount, cross-chain transfer fees. All these parameters will be determined by BSC Validator Set together through a proposal-vote process based on their staking. Such the process will be carried on BC, and the new parameter values will be picked up by corresponding system contracts via a cross-chain communication.
+To address this issue, KRB has implemented a system of penalties for validator nodes that are unable to perform their duties due to unavailability. This system, known as "slashing," is designed to discourage validators from being unavailable and to encourage them to maintain reliable and stable network connectivity.
+Under the slashing system, validator nodes that are found to be unavailable during a certain period are penalized by having a portion of their staked tokens confiscated. The severity of the penalty depends on the length of the unavailability and the amount of staked tokens the validator node has.
+
+In addition to the slashing system, KRB also has measures in place to incentivize validators to maintain reliable network connectivity and to promptly address any issues that may arise. These measures include a reward system for validators that maintain high levels of availability and a governance process that allows validators to propose and vote on changes to the network's parameters.
+
+Overall, KRB's approach to unavailability is designed to ensure the security and reliability of the network by incentivizing validators to maintain stable network connectivity and promptly address any issues that may arise.
+
+## Governance Parameters
+Governance parameters refer to the rules and settings that govern the decision-making process of a blockchain network. In the case of Kruger Rand Bitcoin (KRB), the governance parameters are designed to ensure that the network is secure, stable, and able to evolve and adapt over time.
+
+The governance parameters on KRB are primarily set and enforced by token holders, who can use their tokens to vote on proposals that affect the network. These proposals can include changes to the network's consensus algorithm, adjustments to staking and reward structures, and other key decisions.
+
+To ensure that proposals are properly considered and that the decision-making process is fair and transparent, KRB uses a liquid democracy system, which allows token holders to delegate their voting power to other users. This system ensures that all users have a say in the direction of the network, regardless of their level of expertise or technical knowledge.
+
+In addition to the liquid democracy system, KRB also has a governance council, which is composed of key stakeholders and technical experts. The governance council serves as an advisory body, providing guidance and expertise to the network's decision-makers.
+
+Overall, the governance parameters on KRB are designed to ensure that the network remains secure, stable, and able to evolve and adapt over time. By allowing all users to have a say in the network's direction and leveraging the expertise of technical experts, KRB is well-positioned to grow and thrive in the fast-moving and rapidly evolving world of cryptocurrency.
 
 # Relayers
+In the context of blockchain technology, a relayer is an intermediary that helps to facilitate communication and transactions between different networks. In the case of Kruger Rand Bitcoin (KRB), relayers play an important role in enabling cross-chain transfers and communication.
 
-Relayers are responsible to submit Cross-Chain Communication Packages between the two blockchains. Due to the heterogeneous parallel chain structure, two different types of Relayers are created.
+Relayers in KRB can be thought of as a type of decentralized exchange (DEX) that facilitates the movement of assets between different blockchain networks. By connecting different networks, relayers allow users to exchange and transfer assets across chains, opening up new possibilities for decentralized finance (DeFi) and other use cases.
 
-## BSC Relayers
+One of the key advantages of using relayers in KRB is that they allow for seamless and efficient cross-chain communication without the need for centralized intermediaries or gateways. This means that users can transfer assets between different chains without having to go through a centralized exchange, reducing counterparty risk and increasing transparency and security.
 
-Relayers for BC to BSC communication referred to as “**BSC Relayers**”, or just simply “Relayers”. Relayer is a standalone process that can be run by anyone, and anywhere, except that Relayers must register themselves onto BSC and deposit a certain refundable amount of BNB. Only relaying requests from the registered Relayers will be accepted by BSC. 
+Relayers in KRB also play a key role in governance, as they help to facilitate the voting and decision-making processes that govern the network. By allowing users to participate in governance without the need for a centralized authority, relayers help to ensure that KRB remains decentralized and transparent, while also enabling community members to have a voice in shaping the future of the network.
 
-The package they relay will be verified by the on-chain light client on BSC. The successful relay needs to pass enough verification and costs gas fees on BSC, and thus there should be incentive reward to encourage the community to run Relayers.
+Overall, relayers play a critical role in the functioning of KRB, enabling efficient and secure cross-chain communication, as well as decentralized governance and decision-making. As the KRB ecosystem continues to grow and evolve, the role of relayers is likely to become even more important, as they help to connect and integrate different blockchain networks and facilitate the development of new use cases and applications.
 
-### Incentives
+## KRB Incentives
+KRB incentivizes users to participate in network activities, such as staking and validating, through a reward system. The reward system is designed to ensure that the network is secure and reliable, while also encouraging users to actively participate in network activities.
 
-There are two major communication types:
+Staking Rewards: Users who stake their KRB tokens in the designated wallet are rewarded with a portion of the transaction fees generated on the network. This provides an incentive for users to hold KRB and contribute to the security and stability of the network through staking.
 
-1. Users triggered Operations, such as `token bind` or `cross chain transfer`. Users must pay additional fee to as relayer reward. The reward will be shared with the relayers who sync the referenced blockchain headers. Besides, the reward won't be paid the relayers' accounts directly. A reward distribution mechanism will be brought in to avoid monopolization.
-2. System Synchronization, such as delivering `refund package`(caused by failures of most oracle relayers), special blockchain header synchronization(header contains BC validatorset update), BSC staking package. System reward contract will pay reward to relayers' accounts directly.
+* Validator Rewards: Validators who participate in the consensus process by verifying transactions and adding new blocks to the blockchain are also rewarded with KRB tokens. This provides an incentive for validators to contribute to the security and finality of the network.
+* Community Incentives: In addition to staking and validator rewards, KRB also offers a range of community incentives to encourage participation and engagement. These incentives may include airdrops, contests, and other promotional activities that are designed to reward users for their participation and engagement.
+* Seed Fund: The KRB ecosystem also includes a seed fund, which is used to support the development of new projects and initiatives that contribute to the growth and success of the network. The seed fund is financed through a portion of the transaction fees generated on the network, and is managed by the KRB community through a decentralized governance process.
 
-If some Relayers have faster networks and better hardware, they can monopolize all the package relaying and leave no reward to others. Thus fewer participants will join for relaying, which encourages centralization and harms the efficiency and security of the network. Ideally, due to the decentralization and dynamic re-election of BSC validators, one Relayer can hardly be always the first to relay every message. But in order to avoid the monopolization further, the rewarding economy is also specially designed to minimize such chance:
-
-1. The reward for Relayers will be only distributed in batches, and one batch will cover a number of successful relayed packages.
-2. The reward a Relayer can get from a batch distribution is not linearly in proportion to their number of successful relayed packages. Instead, except the first a few relays, the more a Relayer relays during a batch period, the less reward it will collect.
+Overall, KRB provides a range of incentives and rewards that are designed to encourage users to participate in network activities and contribute to the growth and success of the ecosystem. With its focus on security, accessibility, and transparency, KRB has the potential to become a leading digital currency for investors around the world.
 
 ## Oracle Relayers
+Oracle relayers are an essential component of decentralized finance (DeFi) ecosystems, as they provide reliable and accurate price feeds for on-chain smart contracts. In the context of KRB, oracle relayers are responsible for providing accurate price feeds for gold, which is used to determine the value of KRB.
 
-Relayers for BSC to BC communication are using the “Oracle” model, and so-called “**Oracle Relayers**”. Each of the validators must, and only the ones of the validator set, run Oracle Relayers. Each Oracle Relayer watches the blockchain state change. Once it catches Cross-Chain Communication Packages, it will submit to vote for the requests. After Oracle Relayers from ⅔ of the voting power of BC validators vote for the changes, the cross-chain actions will be performed.
+Oracle relayers are incentivized to provide accurate price feeds through a system of rewards and penalties. When an oracle relayer provides an accurate price feed, they are rewarded with KRB tokens. However, if an oracle relayer provides an inaccurate or manipulated price feed, they are penalized by having their staked KRB tokens slashed.
 
-Oracle Replayers should wait for enough blocks to confirm the finality on BSC before submitting and voting for the cross-chain communication packages onto BC.
+To ensure that price feeds are accurate and unbiased, KRB uses a decentralized oracle system that sources price data from multiple sources, such as major gold exchanges and indexes. This system helps to mitigate the risk of price manipulation or inaccuracies.
 
-The cross-chain fees will be distributed to BC validators together with the normal BC blocking rewards.
+The role of oracle relayers in the KRB ecosystem is critical, as accurate price feeds are necessary to ensure that the value of KRB remains tied to the price of gold. By incentivizing oracle relayers to provide accurate price feeds, KRB is able to maintain a stable and reliable store of value for investors.
 
-Such oracle type relaying depends on all the validators to support. As all the votes for the cross-chain communication packages are recorded on the blockchain, it is not hard to have a metric system to assess the performance of the Oracle Relayers. The poorest performer may have their rewards clawed back via another Slashing logic introduced in the future.
+## Outlook
+In conclusion, Kruger Rand Bitcoin is a unique and innovative cryptocurrency that offers investors a stable and reliable store of value that is tied to the price of gold. With its focus on security, accessibility, and transparency, Kruger Rand Bitcoin has the potential to become a leading digital currency for investors around the world.
 
-# Outlook
+Kruger Rand Bitcoin is built on a blockchain technology based on the Bitcoin blockchain, with a unique algorithm that ties its value to the price of gold. The platform uses an ERC-20 token called KRB, which is designed to be used within the Kruger Rand Bitcoin ecosystem for transactions, staking, and other activities.
 
-It is hard to conclude for Binance Chain, as it has never stopped evolving. The dual-chain strategy is to open the gate for users to take advantage of the fast transferring and trading on one side, and flexible and extendable programming on the other side, but it will be one stop along the development of Binance Chain. Here below are the topics to look into so as to facilitate the community better for more usability and extensibility:
+The team behind Kruger Rand Bitcoin is committed to the long-term success of the project and has developed a clear roadmap for the project that outlines plans for development, marketing, and community engagement. Kruger Rand Bitcoin is also committed to complying with all relevant legal and regulatory requirements, including any licenses or approvals that may be required in the jurisdictions where it operates.
 
-1. Add different digital asset model for different business use cases
-2. Enable more data feed, especially DEX market data, to be communicated from Binance DEX to BSC
-3. Provide interface and compatibility to integrate with Ethereum, including its further upgrade, and other blockchain
-4. Improve client side experience to manage wallets and use blockchain more  conveniently
+The Kruger Rand Bitcoin ecosystem offers several key benefits to users and the market in general, including stability and reliability, security, accessibility, transparency, and lower fees compared to traditional financial institutions and many other cryptocurrencies. Additionally, Kruger Rand Bitcoin's focus on security, accessibility, and transparency sets it apart from many other cryptocurrencies and traditional financial institutions.
 
+Overall, Kruger Rand Bitcoin provides a compelling investment option for individuals and businesses seeking a safe, reliable, and accessible way to protect and grow their wealth. With its transactional use, staking rewards, low fees, and unique tie to the price of gold, KRB has the potential to become a leading digital currency for investors around the world.
 
+## Conclusion
+Kruger Rand Bitcoin has several unique features that set it apart from other cryptocurrencies, such as its tie to the price of gold, its focus on security, accessibility, and transparency, and its commitment to compliance with legal and regulatory requirements. Additionally, the Kruger Rand Bitcoin team has a clear roadmap for development, marketing, and community engagement, and they have demonstrated a strong commitment to the long-term success of the project.
 
-------
-
-[1]:  BNB business practitioners may provide other benefits for BNB delegators, as they do now for long term BNB holders.
+While the success of any cryptocurrency project ultimately depends on a wide range of factors, including market conditions, adoption rates, and regulatory developments, Kruger Rand Bitcoin certainly appears to have a strong foundation and a unique value proposition that could make it an attractive investment option for individuals and businesses seeking a stable and reliable store of value.
